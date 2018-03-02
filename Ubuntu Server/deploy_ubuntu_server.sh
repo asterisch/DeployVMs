@@ -117,32 +117,39 @@ install_manually()
 		return 1
 	esac
 }
+## Arguments "category_name" [--dry]
 function install_categ()
 {
-	if [  -z "$1" ];then
+	if [ -z "$1" ];then
 		echo "No category chosen!"
 		return
 	fi
 	categ="$1[@]"
 	apps=${!categ}
-	if [ "$(echo $@ | grep -oi "dry")" == "dry" ] && [ ! -z "$@" ] ;then
-		dry="echo Package:\$app"
+	if [ "$(echo $2 | grep -io "^\-\-dry$")" == "--dry" ];then
+		dry="echo Package: \$app"
 		dry_run=true
 	else
 		dry="apt-get install -y \$app"
 	fi
+  ## Remove installed packages
+  ## and packages that can't be installed via apt's ubuntu repositories
+  ## from the 'apt to-install' list
 	for app in $apps;do
 		app_in_manually $app
 		xstat=$?
+    ## Remove packeges from 'to-install' list that do not exist in ubuntu's repositories
 		if [ $xstat -eq 0 ];then
 			if [ $(which $app | wc -w ) -gt 0 ];then
 				apps=("${apps[@]/$app}")
 			fi
 		else
+    ## Remove already installed packages from 'to-install' list
 			pack=$(dpkg-query -f '${binary:Package}\n' -W | grep -io "^$app$" | head -n 1)
 			apps=("${apps[@]/$pack}")
 		fi
 	done
+  ## Install or show(dry run) installable packages
 	for app in $apps;do
 		app_in_manually $app
 		xstat=$?
@@ -171,7 +178,7 @@ function install_categ()
 function list_pkgs()
 {
   categs=$(echo "$@" | tr ' ' '\n' | grep -iF "$( echo ${full[@]} | tr ' ' '\n')" - | tr [A-Z] [a-z] )
-  if [ "$(echo $1 | grep -io "\-\-list" )" == "--list" ];then
+  if [ "$(echo $1 | grep -io "^\-\-list$" )" == "--list" ];then
     echo "Running in list mode"
     if [ -z "$categs" ];then
 		    echo "No category chosen! Listing all.."
@@ -211,7 +218,7 @@ then
 	apt install -y $vboxguest_tools
 fi
 
-
+## Do the installation or list installable packages (dry run mode)
 for categ in ${full[@]};do
 	install_categ $categ $1
 done
