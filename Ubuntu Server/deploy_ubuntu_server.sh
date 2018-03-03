@@ -120,22 +120,39 @@ install_manually()
 ## Arguments "category_name" [--dry]
 function install_categ()
 {
-	if [ -z "$1" ];then
-		echo "No category chosen!"
-		return
-	fi
-	categ="$1[@]"
-	apps=${!categ}
-	if [ "$(echo $2 | grep -io "^\-\-dry$")" == "--dry" ];then
-		dry="echo Package: \$app"
-		dry_run=true
-	else
-		dry="apt-get install -y \$app"
-	fi
+  # filter the categories from the parameters given to the script
+  categs_str=$(echo "$@" | tr [A-Z] [a-z] | tr ' ' '\n' | grep -oF "$( echo ${full[@]} | tr ' ' '\n')" - )
+  echo "$@" | tr [A-Z] [a-z] | tr ' ' '\n' | grep -oF "$( echo ${full[@]} | tr ' ' '\n')" -
+
+  # Convert categories String to Array
+  for i in $(seq 1 $(echo $categs_str | wc -w));do
+        categs_lst+=("$(echo $categs_str | cut -d\  -f$i)")
+  done
+  # Check for dry run mode
+  if [ "$(echo $1 | grep -io "^\-\-dry$")" == "--dry" ];then
+    dry="echo Package: \$app"
+    dry_run=true
+  else
+    dry="apt-get install -y \$app"
+  fi
+  # Create packages list from categories given in the input
+  if [ "$(echo $@ | grep -o "full")" == "full" ];then
+    for categ in ${full[@]};do
+       categ="$categ[@]"
+  	   apps+=("${!categ}")
+    done
+  else
+    for categ in ${categs_lst[@]};do
+      categ="$categ[@]"
+      apps+=("${!categ}")
+    done
+  fi
+  echo -e "Packages From Categories Given:\n${apps[@]}" >> "$logFile"
+
   ## Remove installed packages
   ## and packages that can't be installed via apt's ubuntu repositories
   ## from the 'apt to-install' list
-	for app in $apps;do
+	for app in ${apps[@]};do
 		app_in_manually $app
 		xstat=$?
     ## Remove packeges from 'to-install' list that do not exist in ubuntu's repositories
@@ -149,8 +166,9 @@ function install_categ()
 			apps=("${apps[@]/$pack}")
 		fi
 	done
+  if $dry_run;then echo "To install: ";fi
   ## Install or show(dry run) installable packages
-	for app in $apps;do
+	for app in ${apps[@]};do
 		app_in_manually $app
 		xstat=$?
 		if [ $xstat -eq 0 ];then
@@ -158,7 +176,7 @@ function install_categ()
 				install_manually $app
 				#xstat=$?
 			else
-				echo "Package:$app"
+				echo "Package: $app"
 			fi
 		else
 			eval "$dry" #apt-get install -y $app"
@@ -199,6 +217,11 @@ function list_pkgs()
 
 }
 
+if [ "$#" -lt 1 ];then
+  echo "No parameters gievn"
+  exit
+fi
+## if list mode is given the script exists
 list_pkgs "$@"
 
 check_conn
@@ -219,9 +242,10 @@ then
 fi
 
 ## Do the installation or list installable packages (dry run mode)
-for categ in ${full[@]};do
-	install_categ $categ $1
-done
+install_categ "$@"
+#for categ in ${full[@]};do
+#	install_categ $1 $categ
+#done
 
 #configure xfce
 xfce_cf="$wd/xfce4_conf.tar"
