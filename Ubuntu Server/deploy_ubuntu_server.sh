@@ -122,12 +122,13 @@ function install_categ()
 {
   # filter the categories from the parameters given to the script
   categs_str=$(echo "$@" | tr [A-Z] [a-z] | tr ' ' '\n' | grep -oF "$( echo ${full[@]} | tr ' ' '\n')" - )
-  echo "$@" | tr [A-Z] [a-z] | tr ' ' '\n' | grep -oF "$( echo ${full[@]} | tr ' ' '\n')" -
 
   # Convert categories String to Array
   for i in $(seq 1 $(echo $categs_str | wc -w));do
         categs_lst+=("$(echo $categs_str | cut -d\  -f$i)")
   done
+  if [ ${#categs_lst} -eq 0 ] && [ ! "$(echo $@ | grep -o "full")" == "full" ];then echo "[+] No Categories Given! Exiting...";exit;fi
+
   # Check for dry run mode
   if [ "$(echo $1 | grep -io "^\-\-dry$")" == "--dry" ];then
     dry="echo Package: \$app"
@@ -166,7 +167,8 @@ function install_categ()
 			apps=("${apps[@]/$pack}")
 		fi
 	done
-  if $dry_run;then echo "To install: ";fi
+  if $dry_run;then echo "[+] To install: ";fi
+  if [ $(echo "${apps[@]}" | wc -w) -eq 0 ];then echo "[+] All selected categories are already installed!";exit;fi
   ## Install or show(dry run) installable packages
 	for app in ${apps[@]};do
 		app_in_manually $app
