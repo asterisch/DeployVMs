@@ -14,7 +14,9 @@ List all categories by name (no packages)
 Dry run mode: Use this to print which packages are to be installed on your system.Already installed will be skipped and not be printed.
 
     ./deploy-<script>.sh --dry "category name"
-    or
+
+or for every package in script:
+
     ./deploy-<script>.sh --dry full
 
      
