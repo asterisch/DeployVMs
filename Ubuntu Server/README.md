@@ -1,7 +1,7 @@
 ## Deployment
 Install all available packages:
      
-     sudo ./deploy-<script>.sh --full
+     sudo ./deploy-<script>.sh full
      
 List all available packages per category:
 
@@ -13,6 +13,8 @@ List all categories by name (no packages)
 
 Dry run mode: Use this to print which packages are to be installed on your system.Already installed will be skipped and not be printed.
 
-    ./deploy-<script>.sh --dry
+    ./deploy-<script>.sh --dry "category name"
+    or
+    ./deploy-<script>.sh --dry full
 
      
