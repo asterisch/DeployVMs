@@ -220,7 +220,7 @@ function list_pkgs()
 }
 
 if [ "$#" -lt 1 ];then
-  echo "No parameters gievn"
+  echo "No parameters given"
   exit
 fi
 ## if list mode is given the script exists
@@ -237,17 +237,13 @@ create_log
 
 ## Check if the deplying machine is Virtual
 ## and if sto install virtualbox guest additions
-detectVM
+isVM=detectVM
 if $isVM
 then
 	apt install -y $vboxguest_tools
 fi
-
 ## Do the installation or list installable packages (dry run mode)
 install_categ "$@"
-#for categ in ${full[@]};do
-#	install_categ $1 $categ
-#done
 
 #configure xfce
 xfce_cf="$wd/xfce4_conf.tar"
